@@ -1,0 +1,21 @@
+version: '3.8'
+services:
+  postgres:
+    image: ankane/pgvector
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: test
+      POSTGRES_DB: demo
+    ports:
+      - "3001:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+  pgadmin:
+    image: dpage/pgadmin4:9.8
+    ports:
+      - "5050:80"
+    environment:      
+      - PGADMIN_DEFAULT_EMAIL=julianrobayo8000@gmail.com
+      - PGADMIN_DEFAULT_PASSWORD=test
+volumes:
+  pgdata:

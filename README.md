@@ -34,3 +34,42 @@ You can check out [the Next.js GitHub repository](https://github.com/vercel/next
 The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
 
 Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+
+## RAG Chat
+
+A basic retrieval-augmented chat is available at /chat.
+
+1. Set OPENAI_API_KEY in your environment.
+2. Run: npm run dev
+3. Visit: http://localhost:3000/chat
+4. Ask questions about software architecture, testing, performance, security, or code reviews.
+
+The API endpoint: POST /api/chat
+Body: { "message": "Your question", "history": [ { "role": "user"|"assistant", "content": "..." } ] }
+Returns: { reply, history, sources }
+
+## Vector Store (Postgres + pgvector)
+
+This project can use Postgres with pgvector instead of Chroma.
+
+1. Start services:
+   docker compose up -d
+2. Set environment variables (example):
+   OPENAI_API_KEY=sk-***
+   PGHOST=localhost
+   PGPORT=5432
+   PGUSER=postgres
+   PGPASSWORD=test
+   PGDATABASE=demo
+3. Run dev:
+   npm run dev
+4. Open /chat and ask questions. The first request seeds documents into the software_docs table (if empty).
+
+The code in config/langchain.ts:
+- Ensures the vector extension exists.
+- Creates table software_docs (vector dimension 1536).
+- Seeds curated software development documents once.
+- Performs similarity search via PGVectorStore.
+
+To reset:
+  psql -h localhost -U postgres -d demo -c "TRUNCATE software_docs;"
