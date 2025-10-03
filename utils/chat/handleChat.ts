@@ -8,21 +8,14 @@ import {
   ToolMessage,
 } from "@langchain/core/messages";
 import { fetchQuizQuestionTool } from "../tools";
-import { AnswerToolParams } from "../tools/types";
+import type { AnswerToolParams } from "../tools/types";
+import type {
+  HandleChatParams,
+  HandleChatResult,
+  InvokableTool,
+} from "./types";
 
 type HistItem = { role: string; content: string };
-
-interface HandleChatParams {
-  message: string;
-  history: HistItem[];
-}
-
-interface HandleChatResult {
-  reply: string;
-  history: HistItem[];
-  sources: { source: string; topic: string; snippet: string }[];
-  meta?: Record<string, unknown>;
-}
 
 export async function handleChat({
   message,
@@ -67,8 +60,9 @@ export async function handleChat({
 
   if (toolCalls?.length) {
     const toolResults: ToolMessage[] = [];
-    const toolMap: Record<string, unknown> = {
-      [fetchQuizQuestionTool.name]: fetchQuizQuestionTool,
+
+    const toolMap: Record<string, InvokableTool> = {
+      [fetchQuizQuestionTool.name]: fetchQuizQuestionTool as InvokableTool,
     };
 
     for (const call of toolCalls) {
@@ -88,7 +82,7 @@ export async function handleChat({
         parsedArgs = {};
       }
 
-      const tool = toolMap[name];
+      const tool = toolMap[name as string] as InvokableTool | undefined;
       let toolOutput: string;
 
       if (!tool) {
