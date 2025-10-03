@@ -19,6 +19,7 @@ export default function Chat() {
     setInput("");
     const userHistEntry = { role: "user", content: userMessage };
     const outgoingHistory = [...history, userHistEntry];
+    console.log({ outgoingHistory });
     setHistory(outgoingHistory);
     setLoading(true);
     setStreaming(true);
@@ -33,14 +34,14 @@ export default function Chat() {
       if (!res.ok) throw new Error("Failed to get response");
 
       const data = await res.json();
-      // Prefer server history if provided (it includes assistant reply)
+      
       if (data?.history && Array.isArray(data.history)) {
         setHistory(data.history);
       } else if (data?.reply) {
         setHistory((h) => [...h, { role: "assistant", content: data.reply }]);
       }
       if (data?.sources) setSources(data.sources);
-      // Auto-scroll after full response
+      
       requestAnimationFrame(() => {
         listRef.current?.scrollTo({
           top: listRef.current.scrollHeight,
@@ -50,7 +51,7 @@ export default function Chat() {
     } catch (e) {
       setHistory((h) => [
         ...h,
-        { role: "assistant", content: "Error: could not get response." },
+        { role: "assistant", content: "I have an error with your request." },
       ]);
     } finally {
       setLoading(false);

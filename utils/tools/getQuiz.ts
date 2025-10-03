@@ -2,6 +2,7 @@ import { z } from "zod";
 import { tool } from "@langchain/core/tools";
 import QuizRepository from "@/repositories/quiz/quizRepository";
 import type { AnswerToolParams } from "./types";
+import type { AnswerResponse } from "@/repositories/quiz/types";
 
 const fetchQuizQuestionTool = tool(
   async (input: unknown) => {
@@ -16,7 +17,7 @@ const fetchQuizQuestionTool = tool(
     if (tags) params.tags = tags;
     params.limit = String(limit ?? 1);
 
-    const data: any = await repo.getQuizz(params);
+    const data: AnswerResponse[] = await repo.getQuizz(params);
     if (!Array.isArray(data) || data.length === 0) {
       return "No quiz questions found for the given parameters.";
     }

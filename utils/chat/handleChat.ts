@@ -8,6 +8,7 @@ import {
   ToolMessage,
 } from "@langchain/core/messages";
 import { fetchQuizQuestionTool } from "../tools";
+import { AnswerToolParams } from "../tools/types";
 
 type HistItem = { role: string; content: string };
 
@@ -46,23 +47,21 @@ export async function handleChat({
     : "No domain documents matched.";
 
   const system = new SystemMessage(
-    "You are a helpful software development assistant. Use provided context for authoritative details.\n\nContext:\n" +
+    "You are a helpful software development assistant. Use only the provided context for authoritative details.\n\nContext:\n" +
       contextBlock,
   );
 
   const modelWithTools = chat.bindTools([fetchQuizQuestionTool]);
 
   const baseMessages = [system, ...chatHistory, new HumanMessage(message)];
-
   const first = await modelWithTools.invoke(baseMessages);
-
   const toolCalls = first.tool_calls;
 
   let finalMessage = first;
   const toolExecutionMeta: {
     id: string;
     name: string;
-    args: any;
+    args: AnswerToolParams;
     success: boolean;
   }[] = [];
 
@@ -124,7 +123,6 @@ export async function handleChat({
 
   const newHistory: HistItem[] = [
     ...history,
-    { role: "user", content: message },
     { role: "assistant", content: reply },
   ];
 
