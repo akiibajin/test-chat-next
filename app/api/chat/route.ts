@@ -1,11 +1,11 @@
-import { NextRequest, NextResponse } from "next/server";
-import { ChatOpenAI } from "@langchain/openai";
+import { type NextRequest, NextResponse } from "next/server";
 import {
   HumanMessage,
   AIMessage,
   SystemMessage,
 } from "@langchain/core/messages";
 import VectorStore from "@/utils/getVectorStore";
+import { chat } from "@/config/langchain";
 
 export async function POST(req: NextRequest) {
   try {
@@ -39,12 +39,7 @@ export async function POST(req: NextRequest) {
         contextBlock
     );
 
-    const chat = new ChatOpenAI({
-      temperature: 0.4,
-      model: "gpt-3.5-turbo",
-    });
-
-    const result = await chat.call([
+    const result = await chat.invoke([
       system,
       ...chatHistory,
       new HumanMessage(message),
