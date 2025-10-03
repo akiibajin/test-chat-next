@@ -1,4 +1,5 @@
 "use client";
+
 import { useState, useRef } from "react";
 export default function Chat() {
   const [history, setHistory] = useState<{ role: string; content: string }[]>(
@@ -6,6 +7,7 @@ export default function Chat() {
   );
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
+  const [streaming, setStreaming] = useState(false);
   const [sources, setSources] = useState<
     { source: string; topic: string; snippet: string }[]
   >([]);
@@ -15,18 +17,30 @@ export default function Chat() {
     if (!input.trim() || loading) return;
     const userMessage = input.trim();
     setInput("");
-    setHistory((h) => [...h, { role: "user", content: userMessage }]);
+    const userHistEntry = { role: "user", content: userMessage };
+    const outgoingHistory = [...history, userHistEntry];
+    setHistory(outgoingHistory);
     setLoading(true);
+    setStreaming(true);
+
     try {
       const res = await fetch("/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message: userMessage, history }),
+        body: JSON.stringify({ message: userMessage, history: outgoingHistory }),
       });
+
+      if (!res.ok) throw new Error("Failed to get response");
+
       const data = await res.json();
-      if (data.error) throw new Error(data.error);
-      setHistory(data.history);
-      setSources(data.sources || []);
+      // Prefer server history if provided (it includes assistant reply)
+      if (data?.history && Array.isArray(data.history)) {
+        setHistory(data.history);
+      } else if (data?.reply) {
+        setHistory((h) => [...h, { role: "assistant", content: data.reply }]);
+      }
+      if (data?.sources) setSources(data.sources);
+      // Auto-scroll after full response
       requestAnimationFrame(() => {
         listRef.current?.scrollTo({
           top: listRef.current.scrollHeight,
@@ -40,6 +54,7 @@ export default function Chat() {
       ]);
     } finally {
       setLoading(false);
+      setStreaming(false);
     }
   }
 
@@ -61,9 +76,9 @@ export default function Chat() {
             code reviews.
           </p>
         )}
-        {history.map((m, i) => (
+        {history.map((m) => (
           <div
-            key={i}
+            key={m.content}
             className={m.role === "user" ? "text-right" : "text-left"}
           >
             <div
@@ -86,20 +101,25 @@ export default function Chat() {
           onChange={(e) => setInput(e.target.value)}
           onKeyDown={onKey}
           placeholder="Type your question..."
+          disabled={loading}
         />
         <button
+          type="button"
           onClick={send}
           disabled={loading}
           className="px-4 py-2 rounded bg-black text-white disabled:opacity-50"
         >
-          {loading ? "..." : "Send"}
+          {streaming ? "●●●" : loading ? "..." : "Send"}
         </button>
       </div>
       {sources.length > 0 && (
         <div className="border rounded p-3 text-xs space-y-2">
           <div className="font-semibold">Sources</div>
-          {sources.map((s, i) => (
-            <div key={i} className="border-t pt-2 first:border-t-0 first:pt-0">
+          {sources.map((s) => (
+            <div
+              key={s.topic + s.source}
+              className="border-t pt-2 first:border-t-0 first:pt-0"
+            >
               <div className="font-medium">
                 {s.source} ({s.topic})
               </div>
@@ -111,3 +131,4 @@ export default function Chat() {
     </>
   );
 }
+
